@@ -4,9 +4,9 @@ from product.models import Product
 from product.models import Category
 
 class CategoryFactory(factory.django.DjangoModelFactory):
-    title = factory.Faker('pstr')
-    slug = factory.Faker('pstr')
-    description = factory.Faker('pstr')
+    title = factory.Faker('pystr')
+    slug = factory.Faker('pystr')
+    description = factory.Faker('pystr')
     active = factory.Iterator([True, False])
 
     class Meta:
