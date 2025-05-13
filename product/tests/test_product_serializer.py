@@ -17,15 +17,15 @@ def test_product_serializer_with_factory():
                 "title": cat1.title,
                 "slug": "slug1",
                 "description": cat1.description,
-                "active": cat1.active
+                "active": cat1.active,
             },
             {
                 "title": cat2.title,
                 "slug": "slug2",
                 "description": cat2.description,
-                "active": cat2.active
-            }
-        ]
+                "active": cat2.active,
+            },
+        ],
     }
 
     serializer = ProductSerializer(data=data)

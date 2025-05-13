@@ -3,14 +3,12 @@ import pytest
 from product.models.product import Product
 
 
-
-
 @pytest.mark.django_db
 def test_create_product():
     product = Product.objects.create(
         title="Titulo teste do produto",
         description="Descrição de teste lalala",
-        price=999
+        price=999,
     )
 
     assert product.title == "Titulo teste do produto"

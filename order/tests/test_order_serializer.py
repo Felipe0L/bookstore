@@ -2,6 +2,7 @@ import pytest
 from order.serializers import OrderSerializer
 from order.factories import OrderFactory, ProductFactory
 
+
 @pytest.mark.django_db
 def test_order_serializer_serialization():
     # Cria produtos
