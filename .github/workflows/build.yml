@@ -6,20 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: bookstore_dev
-          POSTGRES_PASSWORD: bookstore_dev
-          POSTGRES_DB: bookstore_dev_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:  # 👈 Aqui você define variáveis de ambiente globais do job
+      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1"
+      SECRET_KEY: "fake-secret-key"  # 👈 (opcional) se você também usa isso em settings.py
+      DEBUG: "0"
 
     strategy:
       fail-fast: false
@@ -27,33 +17,29 @@ jobs:
         python-version: [3.12]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
+      - name: Install poetry
+        run: |
+          python -m ensurepip
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade poetry
 
-    - name: Configure Poetry
-      run: poetry config virtualenvs.in-project true
+      - name: Cache Poetry virtualenvs
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
 
-    - name: Cache Poetry virtualenvs
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry
-        key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          poetry-${{ runner.os }}-
+      - name: Install dependencies
+        run: poetry install
 
-    - name: Install dependencies
-      run: poetry install
-
-    - name: Run Django tests with manage.py
-      env:
-        DATABASE_URL: postgres://bookstore_dev:bookstore_dev@localhost:5432/bookstore_dev_db
-      run: poetry run python manage.py test
+      - name: Run Django tests with manage.py
+        run: poetry run python manage.py test
