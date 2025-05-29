@@ -1,39 +1,32 @@
-FROM python:3.13.1-slim AS python-base
+# syntax=docker/dockerfile:1
+FROM python:3.12.1-slim
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+# Instalações básicas
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
+    build-essential \
+    libpq-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
-
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        build-essential
-
+# Instala o Poetry
 RUN pip install poetry
 
-RUN apt-get update \
-    && apt-get -y install libpq-dev gcc \
-    && pip install psycopg2
+# Define o diretório de trabalho
+WORKDIR /opt/pysetup
 
-WORKDIR $PYSETUP_PATH
-COPY poetry.lock pyproject.toml ./
+# Copia os arquivos de dependências primeiro (para cache)
+COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install --without dev --no-root
+# Instala apenas as dependências (sem tentar instalar o projeto)
+RUN poetry install --no-root && poetry show
 
-WORKDIR /app
+# Copia o restante do projeto
+COPY . .
 
-COPY . /app/
-
+# Expõe a porta (caso use runserver)
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Comando padrão (ajuste se usar outro servidor)
+CMD ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+
