@@ -1,45 +1,42 @@
-name: Python application
+name: Python CI Build
 
 on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
-    env:  # 👈 Aqui você define variáveis de ambiente globais do job
-      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1"
-      SECRET_KEY: "fake-secret-key"  # 👈 (opcional) se você também usa isso em settings.py
-      DEBUG: "0"
-
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.12]
 
+    runs-on: ubuntu-latest
+
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
+      DJANGO_ALLOWED_HOSTS: "localhost"
+      SECRET_KEY: "dummy"
+      DEBUG: 1
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install poetry
+      - name: Install Poetry
         run: |
           python -m ensurepip
           python -m pip install --upgrade pip
           python -m pip install --upgrade poetry
 
-      - name: Cache Poetry virtualenvs
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-
+      - name: View poetry --help
+        run: poetry --help
 
       - name: Install dependencies
         run: poetry install
 
-      - name: Run Django tests with manage.py
+      - name: Run Django tests
         run: poetry run python manage.py test
